@@ -27,8 +27,8 @@ public class VehicleServiceImpl implements IVehicleService {
     public VehicleServiceImpl(VehicleRepository vehicleRepository) {
         this.vehicleRepository = vehicleRepository;
         this.objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule()) // 👈 support for LocalDateTime
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // 👈 ISO-8601 format
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class VehicleServiceImpl implements IVehicleService {
             if (vehicleRepository.findByLicensePlate(request.getLicensePlate()).isPresent()) {
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_ERROR)
-                        .code(SmartParkConstants.CODE_VEHICLE_DUPLICATE)
+                        .code(SmartParkConstants.CODE_VEHICLE_DUPLICATE) // VE01
                         .message(SmartParkConstants.VEHICLE_ALREADY_EXISTS_MSG)
                         .data(null)
                         .build();
@@ -51,7 +51,7 @@ public class VehicleServiceImpl implements IVehicleService {
 
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_SUCCESS)
-                        .code(SmartParkConstants.CODE_SUCCESS)
+                        .code(SmartParkConstants.CODE_SUCCESS) // AC04
                         .message(SmartParkConstants.SUCCESS_VEHICLE_REGISTERED)
                         .data(VehicleMapper.toResponse(saved))
                         .build();
@@ -60,7 +60,7 @@ public class VehicleServiceImpl implements IVehicleService {
             log.error("Error registering vehicle", ex);
             response = ApiResponse.<VehicleResponse>builder()
                     .status(SmartParkConstants.STATUS_ERROR)
-                    .code(SmartParkConstants.CODE_SYSTEM_ERROR)
+                    .code(SmartParkConstants.CODE_SYSTEM_ERROR) // 99
                     .message("Error registering vehicle")
                     .data(null)
                     .build();
@@ -82,37 +82,32 @@ public class VehicleServiceImpl implements IVehicleService {
                     .orElseThrow(() -> new RuntimeException(SmartParkConstants.VEHICLE_NOT_FOUND_MSG));
 
             if (vehicle.getCheckinTime() != null && vehicle.getCheckoutTime() == null) {
-                log.warn("Vehicle with license plate: {} is already checked in", licensePlate);
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_ERROR)
-                        .code(SmartParkConstants.CODE_VEHICLE_ALREADY_CHECKED_IN)
+                        .code(SmartParkConstants.CODE_VEHICLE_ALREADY_CHECKED_IN) 
                         .message(SmartParkConstants.VEHICLE_ALREADY_CHECKED_IN_MSG)
                         .data(null)
                         .build();
-                log.info("Check-in attempt failed for vehicle with license plate: {} to lot ID: {}", licensePlate, lotId);
             } else {
-                log.info("Vehicle with license plate: {} is being checked in to lot ID: {}", licensePlate, lotId);
                 vehicle.setCheckinTime(LocalDateTime.now());
                 vehicle.setCheckoutTime(null);
                 Vehicle saved = vehicleRepository.save(vehicle);
 
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_SUCCESS)
-                        .code(SmartParkConstants.CODE_SUCCESS)
+                        .code(SmartParkConstants.CODE_SUCCESS) 
                         .message(SmartParkConstants.SUCCESS_CHECKIN)
                         .data(VehicleMapper.toResponse(saved))
                         .build();
-                log.info("Vehicle with license plate: {} successfully checked in to lot ID: {}", licensePlate, lotId);
             }
         } catch (Exception ex) {
             log.error("Error checking in vehicle", ex);
             response = ApiResponse.<VehicleResponse>builder()
                     .status(SmartParkConstants.STATUS_ERROR)
-                    .code(SmartParkConstants.CODE_SYSTEM_ERROR)
+                    .code(SmartParkConstants.CODE_SYSTEM_ERROR) 
                     .message("Error checking in vehicle")
                     .data(null)
                     .build();
-            log.info("Check-in attempt failed for vehicle with license plate: {} to lot ID: {}", licensePlate, lotId);
         }
 
         logResponse(response);
@@ -129,44 +124,38 @@ public class VehicleServiceImpl implements IVehicleService {
                     .orElseThrow(() -> new RuntimeException(SmartParkConstants.VEHICLE_NOT_FOUND_MSG));
 
             if (vehicle.getCheckinTime() == null) {
-                log.warn("Vehicle with license plate: {} has not checked in", licensePlate);
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_ERROR)
-                        .code(SmartParkConstants.CODE_VEHICLE_NO_CHECKIN)
+                        .code(SmartParkConstants.CODE_VEHICLE_NO_CHECKIN) 
                         .message(SmartParkConstants.VEHICLE_NO_CHECKIN_MSG)
                         .data(null)
                         .build();
-                log.info("Check-out attempt failed for vehicle with license plate: {} from lot ID: {}", licensePlate, lotId);
             } else if (vehicle.getCheckoutTime() != null) {
-                log.warn("Vehicle with license plate: {} has already checked out", licensePlate);
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_ERROR)
-                        .code(SmartParkConstants.CODE_VEHICLE_ALREADY_CHECKED_OUT)
+                        .code(SmartParkConstants.CODE_VEHICLE_ALREADY_CHECKED_OUT) 
                         .message(SmartParkConstants.VEHICLE_ALREADY_CHECKED_OUT_MSG)
                         .data(null)
                         .build();
-                log.info("Check-out attempt failed for vehicle with license plate: {} from lot ID: {}", licensePlate, lotId);
             } else {
                 vehicle.setCheckoutTime(LocalDateTime.now());
                 Vehicle saved = vehicleRepository.save(vehicle);
-                log.info("Vehicle with license plate: {} successfully checked out from lot ID: {}", licensePlate, lotId);
+
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_SUCCESS)
-                        .code(SmartParkConstants.CODE_SUCCESS)
+                        .code(SmartParkConstants.CODE_SUCCESS) // AC04
                         .message(SmartParkConstants.SUCCESS_CHECKOUT)
                         .data(VehicleMapper.toResponse(saved))
                         .build();
-                log.info("Check-out process completed for vehicle with license plate: {} from lot ID: {}", licensePlate, lotId);
             }
         } catch (Exception ex) {
             log.error("Error checking out vehicle", ex);
             response = ApiResponse.<VehicleResponse>builder()
                     .status(SmartParkConstants.STATUS_ERROR)
-                    .code(SmartParkConstants.CODE_SYSTEM_ERROR)
+                    .code(SmartParkConstants.CODE_SYSTEM_ERROR) // 99
                     .message("Error checking out vehicle")
                     .data(null)
                     .build();
-            log.info("Check-out attempt failed for vehicle with license plate: {} from lot ID: {}", licensePlate, lotId);
         }
 
         logResponse(response);
