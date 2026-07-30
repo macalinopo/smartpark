@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- Console logging -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+
+        <!-- File logging -->
+        <RollingFile name="ParkingLotFile" fileName="logs/parkinglot.log"
+                     filePattern="logs/parkinglot-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] %-5level %logger{36} - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+
+        <RollingFile name="VehicleFile" fileName="logs/vehicle.log"
+                     filePattern="logs/vehicle-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] %-5level %logger{36} - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- ParkingLot topic -->
+        <Logger name="com.grow.smartpark.service.impl.ParkingService" level="info" additivity="false">
+            <AppenderRef ref="ParkingLotFile"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- Vehicle topic -->
+        <Logger name="com.grow.smartpark.service.impl.VehicleService" level="info" additivity="false">
+            <AppenderRef ref="VehicleFile"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <Root level="error">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

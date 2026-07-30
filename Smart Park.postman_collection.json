@@ -1,0 +1,161 @@
+{
+  "info": {
+    "_postman_id": "22e05f59-fc9c-46e6-bcde-9a99e4f60cc9",
+    "name": "Smart Park",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56989840",
+    "_collection_link": "https://go.postman.co/collection/56989840-22e05f59-fc9c-46e6-bcde-9a99e4f60cc9?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Register Parking Lot",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"lotId\": \"LOT-001\",\r\n  \"location\": \"Downtown Parking\",\r\n  \"capacity\": 100,\r\n  \"availableSpaces\": 100,\r\n  \"vehicles\": []\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/parking/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "parking",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Parking Lot Status",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/parking/LOT-001/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "parking",
+            "LOT-001",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Vehicles in Parking Lot",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/parking/LOT-001/vehicles",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "parking",
+            "LOT-001",
+            "vehicles"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Register Vehicle",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"licensePlate\": \"ABC-123\",\r\n  \"vehicleType\": \"Car\",\r\n  \"ownerName\": \"Juan Dela Cruz\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/vehicles/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "vehicles",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Vehicle Check-In",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/vehicles/LOT-001/checkin/ABC-123",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "vehicles",
+            "LOT-001",
+            "checkin",
+            "ABC-123"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Vehicle Check-Out",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/vehicles/LOT-001/checkout/ABC-123",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "vehicles",
+            "LOT-001",
+            "checkout",
+            "ABC-123"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
