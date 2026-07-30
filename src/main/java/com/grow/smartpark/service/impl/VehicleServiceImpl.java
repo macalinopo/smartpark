@@ -9,7 +9,9 @@ import com.grow.smartpark.domain.VehicleRequest;
 import com.grow.smartpark.domain.VehicleResponse;
 import com.grow.smartpark.mapper.VehicleMapper;
 import com.grow.smartpark.model.Vehicle;
+import com.grow.smartpark.model.ValidationRule;
 import com.grow.smartpark.repository.VehicleRepository;
+import com.grow.smartpark.repository.ValidationRuleRepository;
 import com.grow.smartpark.service.IVehicleService;
 
 import lombok.extern.log4j.Log4j2;
@@ -22,10 +24,13 @@ import java.time.LocalDateTime;
 public class VehicleServiceImpl implements IVehicleService {
 
     private final VehicleRepository vehicleRepository;
+    private final ValidationRuleRepository validationRuleRepository;
     private final ObjectMapper objectMapper;
 
-    public VehicleServiceImpl(VehicleRepository vehicleRepository) {
+    public VehicleServiceImpl(VehicleRepository vehicleRepository,
+                              ValidationRuleRepository validationRuleRepository) {
         this.vehicleRepository = vehicleRepository;
+        this.validationRuleRepository = validationRuleRepository;
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -37,10 +42,31 @@ public class VehicleServiceImpl implements IVehicleService {
         try {
             log.info("Registering vehicle with license plate: {}", request.getLicensePlate());
 
+            if (!matchesRule("LICENSE_PLATE_REGEX", request.getLicensePlate())) {
+                log.warn("Invalid license plate format: {}", request.getLicensePlate());
+                return ApiResponse.<VehicleResponse>builder()
+                        .status(SmartParkConstants.STATUS_ERROR)
+                        .code(SmartParkConstants.CODE_VEHICLE_INVALID) 
+                        .message("Invalid license plate format")
+                        .data(null)
+                        .build();
+            }
+
+            if (!matchesRule("OWNER_NAME_REGEX", request.getOwnerName())) {
+                log.warn("Invalid owner name format: {}", request.getOwnerName());
+                return ApiResponse.<VehicleResponse>builder()
+                        .status(SmartParkConstants.STATUS_ERROR)
+                        .code(SmartParkConstants.CODE_VEHICLE_INVALID)
+                        .message("Invalid owner name format")
+                        .data(null)
+                        .build();
+            }
+
             if (vehicleRepository.findByLicensePlate(request.getLicensePlate()).isPresent()) {
+                log.warn("Vehicle with license plate: {} already exists", request.getLicensePlate());
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_ERROR)
-                        .code(SmartParkConstants.CODE_VEHICLE_DUPLICATE) // VE01
+                        .code(SmartParkConstants.CODE_VEHICLE_DUPLICATE)
                         .message(SmartParkConstants.VEHICLE_ALREADY_EXISTS_MSG)
                         .data(null)
                         .build();
@@ -51,7 +77,7 @@ public class VehicleServiceImpl implements IVehicleService {
 
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_SUCCESS)
-                        .code(SmartParkConstants.CODE_SUCCESS) // AC04
+                        .code(SmartParkConstants.CODE_SUCCESS)
                         .message(SmartParkConstants.SUCCESS_VEHICLE_REGISTERED)
                         .data(VehicleMapper.toResponse(saved))
                         .build();
@@ -60,7 +86,7 @@ public class VehicleServiceImpl implements IVehicleService {
             log.error("Error registering vehicle", ex);
             response = ApiResponse.<VehicleResponse>builder()
                     .status(SmartParkConstants.STATUS_ERROR)
-                    .code(SmartParkConstants.CODE_SYSTEM_ERROR) // 99
+                    .code(SmartParkConstants.CODE_SYSTEM_ERROR)
                     .message("Error registering vehicle")
                     .data(null)
                     .build();
@@ -82,9 +108,10 @@ public class VehicleServiceImpl implements IVehicleService {
                     .orElseThrow(() -> new RuntimeException(SmartParkConstants.VEHICLE_NOT_FOUND_MSG));
 
             if (vehicle.getCheckinTime() != null && vehicle.getCheckoutTime() == null) {
+                log.warn("Vehicle with license plate: {} is already checked in", licensePlate);
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_ERROR)
-                        .code(SmartParkConstants.CODE_VEHICLE_ALREADY_CHECKED_IN) 
+                        .code(SmartParkConstants.CODE_VEHICLE_ALREADY_CHECKED_IN)
                         .message(SmartParkConstants.VEHICLE_ALREADY_CHECKED_IN_MSG)
                         .data(null)
                         .build();
@@ -95,7 +122,7 @@ public class VehicleServiceImpl implements IVehicleService {
 
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_SUCCESS)
-                        .code(SmartParkConstants.CODE_SUCCESS) 
+                        .code(SmartParkConstants.CODE_SUCCESS)
                         .message(SmartParkConstants.SUCCESS_CHECKIN)
                         .data(VehicleMapper.toResponse(saved))
                         .build();
@@ -104,7 +131,7 @@ public class VehicleServiceImpl implements IVehicleService {
             log.error("Error checking in vehicle", ex);
             response = ApiResponse.<VehicleResponse>builder()
                     .status(SmartParkConstants.STATUS_ERROR)
-                    .code(SmartParkConstants.CODE_SYSTEM_ERROR) 
+                    .code(SmartParkConstants.CODE_SYSTEM_ERROR)
                     .message("Error checking in vehicle")
                     .data(null)
                     .build();
@@ -124,16 +151,18 @@ public class VehicleServiceImpl implements IVehicleService {
                     .orElseThrow(() -> new RuntimeException(SmartParkConstants.VEHICLE_NOT_FOUND_MSG));
 
             if (vehicle.getCheckinTime() == null) {
+                log.warn("Vehicle with license plate: {} has not checked in yet", licensePlate);
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_ERROR)
-                        .code(SmartParkConstants.CODE_VEHICLE_NO_CHECKIN) 
+                        .code(SmartParkConstants.CODE_VEHICLE_NO_CHECKIN)
                         .message(SmartParkConstants.VEHICLE_NO_CHECKIN_MSG)
                         .data(null)
                         .build();
             } else if (vehicle.getCheckoutTime() != null) {
+                log.warn("Vehicle with license plate: {} is already checked out", licensePlate);
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_ERROR)
-                        .code(SmartParkConstants.CODE_VEHICLE_ALREADY_CHECKED_OUT) 
+                        .code(SmartParkConstants.CODE_VEHICLE_ALREADY_CHECKED_OUT)
                         .message(SmartParkConstants.VEHICLE_ALREADY_CHECKED_OUT_MSG)
                         .data(null)
                         .build();
@@ -143,7 +172,7 @@ public class VehicleServiceImpl implements IVehicleService {
 
                 response = ApiResponse.<VehicleResponse>builder()
                         .status(SmartParkConstants.STATUS_SUCCESS)
-                        .code(SmartParkConstants.CODE_SUCCESS) // AC04
+                        .code(SmartParkConstants.CODE_SUCCESS)
                         .message(SmartParkConstants.SUCCESS_CHECKOUT)
                         .data(VehicleMapper.toResponse(saved))
                         .build();
@@ -152,7 +181,7 @@ public class VehicleServiceImpl implements IVehicleService {
             log.error("Error checking out vehicle", ex);
             response = ApiResponse.<VehicleResponse>builder()
                     .status(SmartParkConstants.STATUS_ERROR)
-                    .code(SmartParkConstants.CODE_SYSTEM_ERROR) // 99
+                    .code(SmartParkConstants.CODE_SYSTEM_ERROR)
                     .message("Error checking out vehicle")
                     .data(null)
                     .build();
@@ -160,6 +189,14 @@ public class VehicleServiceImpl implements IVehicleService {
 
         logResponse(response);
         return response;
+    }
+
+
+    private boolean matchesRule(String ruleName, String value) {
+        log.info("Validating value: {} against rule: {}", value, ruleName);
+        return validationRuleRepository.findByRuleName(ruleName)
+                .map(rule -> value != null && value.matches(rule.getRuleValue()))
+                .orElse(true); 
     }
 
     private void logResponse(Object response) {

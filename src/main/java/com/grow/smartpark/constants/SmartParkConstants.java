@@ -17,6 +17,7 @@ public class SmartParkConstants {
 
     // Vehicle Codes
     public static final String CODE_VEHICLE_DUPLICATE = "VE01";
+    public static final String CODE_VEHICLE_INVALID = "VE03";
     public static final String VEHICLE_ALREADY_EXISTS_MSG = "Vehicle already registered.";
     public static final String VEHICLE_NOT_FOUND_MSG = "Vehicle not found.";
     public static final String SUCCESS_VEHICLE_REGISTERED = "Vehicle registered successfully.";
